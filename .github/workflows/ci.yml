@@ -77,6 +77,15 @@ jobs:
 
       - name: Build project artifacts
         run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          # Pasar explícitamente para que el proxy/middleware los reciba baked-in
+          NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY:  ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY:     ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FOOTBALL_DATA_API_KEY:         ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          VAPID_PRIVATE_KEY:             ${{ secrets.VAPID_PRIVATE_KEY }}
+          CRON_SECRET:                   ${{ secrets.CRON_SECRET }}
 
       - name: Deploy to Vercel
         id: deploy
