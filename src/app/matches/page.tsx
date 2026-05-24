@@ -3,6 +3,13 @@ import MatchCard from '@/components/match/MatchCard'
 import { getStageLabel } from '@/lib/utils'
 import type { Match, MatchStage } from '@/types'
 
+export const metadata = {
+  title: 'Partidos — Mundial 2026',
+  description: 'Calendario completo de partidos del Mundial FIFA 2026 con resultados en tiempo real',
+}
+
+
+
 export const revalidate = 60
 
 const STAGE_ORDER: MatchStage[] = ['GROUP', 'ROUND_32', 'ROUND_16', 'QUARTER', 'SEMI', 'THIRD', 'FINAL']

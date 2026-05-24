@@ -5,6 +5,13 @@ import { GROUP_LETTERS } from '@/lib/utils'
 import { calculateGroupStandings } from '@/lib/scoring'
 import type { Team, Match } from '@/types'
 
+export const metadata = {
+  title: 'Grupos — Mundial 2026',
+  description: 'Tabla de posiciones de los 12 grupos del Mundial FIFA 2026',
+}
+
+
+
 export const revalidate = 60
 
 const POS_COLORS = [

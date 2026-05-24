@@ -3,6 +3,13 @@ import { createClient } from '@/lib/supabase/server'
 import PredictionsClient from './PredictionsClient'
 import type { Match, Prediction } from '@/types'
 
+export const metadata = {
+  title: 'Mis Predicciones — Mundial 2026',
+  description: 'Gestiona tus predicciones para los partidos del Mundial FIFA 2026',
+}
+
+
+
 export const dynamic = 'force-dynamic'
 
 export default async function PredictionsPage() {

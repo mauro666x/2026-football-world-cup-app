@@ -23,17 +23,29 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Refresh session
+  // Refresh session — uses getUser() for server-side verification (not getSession())
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect routes that require auth
-  const protectedPaths = ['/predictions', '/leaderboard']
-  const isProtected = protectedPaths.some(p => request.nextUrl.pathname.startsWith(p))
+  const { pathname } = request.nextUrl
 
-  if (isProtected && !user) {
+  // Pages that require auth
+  const protectedPages = ['/predictions', '/leaderboard']
+  const isProtectedPage = protectedPages.some(p => pathname.startsWith(p))
+
+  // API routes that require auth (beyond their own getUser() check — belt & suspenders)
+  const protectedApiRoutes = ['/api/predictions', '/api/notifications']
+  const isProtectedApi = protectedApiRoutes.some(p => pathname.startsWith(p))
+
+  if ((isProtectedPage || isProtectedApi) && !user) {
     const url = request.nextUrl.clone()
+
+    if (isProtectedApi) {
+      // API routes return 401 JSON, not a redirect
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     url.pathname = '/login'
-    url.searchParams.set('redirectTo', request.nextUrl.pathname)
+    url.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(url)
   }
 

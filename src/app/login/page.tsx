@@ -10,6 +10,13 @@ import Button from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import Spinner from '@/components/ui/Spinner'
 
+export const metadata = {
+  title: 'Iniciar Sesión — Mundial 2026',
+  description: 'Inicia sesión para gestionar tus predicciones del Mundial FIFA 2026',
+}
+
+
+
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()

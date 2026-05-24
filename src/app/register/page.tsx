@@ -7,6 +7,13 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 
+export const metadata = {
+  title: 'Crear Cuenta — Mundial 2026',
+  description: 'Regístrate gratis para hacer tus predicciones del Mundial FIFA 2026',
+}
+
+
+
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

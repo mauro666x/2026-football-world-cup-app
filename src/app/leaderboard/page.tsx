@@ -3,6 +3,13 @@ import { Trophy, Medal, Star } from 'lucide-react'
 import { getAvatarInitials } from '@/lib/utils'
 import type { Profile } from '@/types'
 
+export const metadata = {
+  title: 'Clasificación — Mundial 2026',
+  description: 'Tabla de líderes con los mejores pronosticadores del Mundial FIFA 2026',
+}
+
+
+
 export const revalidate = 300
 
 const MEDAL_CONFIG = [

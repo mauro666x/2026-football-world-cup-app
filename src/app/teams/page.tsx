@@ -3,6 +3,13 @@ import TeamCard from '@/components/team/TeamCard'
 import { GROUP_LETTERS } from '@/lib/utils'
 import type { Team } from '@/types'
 
+export const metadata = {
+  title: 'Equipos — Mundial 2026',
+  description: 'Los 48 equipos clasificados al Mundial FIFA 2026 con estadísticas y jugadores',
+}
+
+
+
 export const revalidate = 3600
 
 export default async function TeamsPage() {

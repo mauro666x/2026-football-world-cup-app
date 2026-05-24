@@ -1,6 +1,13 @@
 import Link from 'next/link'
 import { Calendar, Users, TrendingUp, Zap, Trophy, Bell, ArrowRight, Target, Star } from 'lucide-react'
 
+export const metadata = {
+  title: 'Mundial 2026 — Predicciones',
+  description: 'Predice los resultados del Mundial FIFA 2026 y compite con tus amigos',
+}
+
+
+
 const FEATURES = [
   {
     icon: TrendingUp,

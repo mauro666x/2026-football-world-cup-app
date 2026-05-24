@@ -2,6 +2,13 @@ import { createClient } from '@/lib/supabase/server'
 import MatchCard from '@/components/match/MatchCard'
 import type { Match } from '@/types'
 
+export const metadata = {
+  title: 'En Vivo — Mundial 2026',
+  description: 'Marcadores en tiempo real de los partidos del Mundial FIFA 2026',
+}
+
+
+
 export const revalidate = 30
 
 export default async function LivePage() {
