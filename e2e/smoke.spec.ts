@@ -77,9 +77,10 @@ test.describe('Smoke tests', () => {
 
   test('navbar muestra los 6 links de navegación', async ({ page }) => {
     await page.goto('/')
-    const nav = page.locator('header nav')
+    // Desktop: links en header nav / Mobile: links en BottomNav
+    // Buscar en cualquier nav de la página con .first() para evitar duplicados
     for (const label of ['Inicio', 'Grupos', 'Partidos', 'En Vivo', 'Predicciones', 'Ranking']) {
-      await expect(nav.getByText(label, { exact: true })).toBeVisible()
+      await expect(page.locator('nav').getByText(label, { exact: true }).first()).toBeVisible()
     }
   })
 
