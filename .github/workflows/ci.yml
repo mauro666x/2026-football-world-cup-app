@@ -1,0 +1,139 @@
+name: CI — Test & Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  NODE_VERSION: '20'
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # JOB 1: Build + typecheck (rápido, falla antes del deploy)
+  # ─────────────────────────────────────────────────────────────
+  build:
+    name: Build & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY:  ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY:     ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FOOTBALL_DATA_API_KEY:         ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          VAPID_PRIVATE_KEY:             ${{ secrets.VAPID_PRIVATE_KEY }}
+          CRON_SECRET:                   ${{ secrets.CRON_SECRET }}
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 2: Deploy a Vercel (preview en PRs, producción en main)
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: build
+    outputs:
+      deployment-url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project artifacts
+        run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "🚀 Deployed to: $URL"
+
+      - name: Comment preview URL on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### 🚀 Preview deployment\n\n**URL:** ${{ steps.deploy.outputs.url }}\n\nE2E tests se ejecutarán automáticamente contra esta URL.`
+            })
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 3: E2E tests contra la URL desplegada
+  # ─────────────────────────────────────────────────────────────
+  e2e:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: deploy
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        run: npx playwright test e2e/smoke.spec.ts
+        env:
+          BASE_URL: ${{ needs.deploy.outputs.deployment-url }}
+          CI: true
+
+      - name: Run auth tests
+        run: npx playwright test e2e/auth.spec.ts
+        env:
+          BASE_URL:          ${{ needs.deploy.outputs.deployment-url }}
+          E2E_TEST_EMAIL:    ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          CI: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: playwright-report/
+          retention-days: 14
