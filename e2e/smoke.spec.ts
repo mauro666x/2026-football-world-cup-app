@@ -8,8 +8,9 @@ test.describe('Smoke tests', () => {
   test('home page carga y muestra "MUNDIAL"', async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveTitle(/Mundial 2026/i)
-    await expect(page.getByText('MUNDIAL', { exact: false })).toBeVisible()
-    await expect(page.getByText('2026')).toBeVisible()
+    // La home tiene múltiples elementos con "MUNDIAL" — verificar al menos uno visible
+    await expect(page.getByText('MUNDIAL', { exact: false }).first()).toBeVisible()
+    await expect(page.getByText('2026').first()).toBeVisible()
   })
 
   test('grupos muestra los 12 grupos oficiales', async ({ page }) => {
