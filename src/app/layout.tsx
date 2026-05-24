@@ -1,13 +1,24 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Bebas_Neue, Outfit } from 'next/font/google'
 import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import BottomNav from '@/components/layout/BottomNav'
 import Providers from './providers'
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist' })
-const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
+const bebasNeue = Bebas_Neue({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-bebas',
+  display: 'swap',
+})
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Mundial 2026 — Predicciones',
@@ -26,7 +37,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  themeColor: '#070b14',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -34,16 +45,16 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className="dark" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body
-        className={`${geist.variable} ${geistMono.variable} font-sans bg-black text-white min-h-screen antialiased`}
+        className={`${bebasNeue.variable} ${outfit.variable} font-sans bg-navy text-foreground min-h-screen antialiased`}
       >
         <Providers>
           <Navbar />
-          <main className="max-w-6xl mx-auto px-4 pb-24 md:pb-8 pt-6">
+          <main className="max-w-6xl mx-auto px-4 pb-24 md:pb-10 pt-6">
             {children}
           </main>
           <Footer />

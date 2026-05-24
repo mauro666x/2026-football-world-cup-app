@@ -2,22 +2,39 @@ import { cn } from '@/lib/utils'
 import { type HTMLAttributes } from 'react'
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  glass?: boolean
   hover?: boolean
+  live?: boolean
   padding?: 'none' | 'sm' | 'md' | 'lg'
+  /** @deprecated use default card style */
+  glass?: boolean
 }
 
-export function Card({ className, glass = true, hover = false, padding = 'md', children, ...props }: CardProps) {
+export function Card({
+  className,
+  hover = false,
+  live = false,
+  padding = 'md',
+  children,
+  ...props
+}: CardProps) {
   const paddings = { none: '', sm: 'p-3', md: 'p-4 md:p-5', lg: 'p-6 md:p-8' }
+
+  if (live) {
+    return (
+      <div
+        className={cn('wc-card-live', paddings[padding], hover && 'cursor-pointer', className)}
+        {...props}
+      >
+        {children}
+      </div>
+    )
+  }
 
   return (
     <div
       className={cn(
-        'rounded-2xl border',
-        glass
-          ? 'bg-white/5 dark:bg-white/5 backdrop-blur-sm border-white/10'
-          : 'bg-neutral-900 border-white/5',
-        hover && 'hover:border-white/20 transition-colors cursor-pointer',
+        'wc-card',
+        hover && 'wc-card-hover cursor-pointer',
         paddings[padding],
         className
       )}
@@ -38,7 +55,7 @@ export function CardHeader({ className, children, ...props }: HTMLAttributes<HTM
 
 export function CardTitle({ className, children, ...props }: HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn('font-semibold text-white text-base', className)} {...props}>
+    <h3 className={cn('font-display text-lg tracking-wide text-foreground', className)} {...props}>
       {children}
     </h3>
   )

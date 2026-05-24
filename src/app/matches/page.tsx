@@ -30,21 +30,42 @@ export default async function MatchesPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
+
+      {/* ── Header ── */}
       <div>
-        <h1 className="text-2xl font-black text-white">Calendario</h1>
-        <p className="text-white/40 text-sm mt-1">{matches.length} partidos · 11 jun – 19 jul 2026</p>
+        <h1 className="section-title font-display text-3xl tracking-wider text-foreground">
+          CALENDARIO
+        </h1>
+        <p className="text-foreground/40 text-sm mt-2 ml-3.5">
+          {matches.length} partidos · 11 jun – 19 jul 2026
+        </p>
       </div>
 
+      {/* ── Empty state ── */}
+      {matches.length === 0 && (
+        <div className="wc-card p-16 text-center">
+          <div className="text-5xl mb-4">📅</div>
+          <p className="font-display text-xl tracking-wider text-foreground/30">CALENDARIO PRÓXIMAMENTE</p>
+          <p className="text-sm text-foreground/20 mt-2">Los partidos se cargarán cuando comience el torneo</p>
+        </div>
+      )}
+
+      {/* ── Stages ── */}
       {STAGE_ORDER.map(stage => {
         const stageMatches = byStage.get(stage)
         if (!stageMatches?.length) return null
 
         return (
           <section key={stage}>
-            <h2 className="font-semibold text-white/60 text-sm uppercase tracking-wider mb-3">
-              {getStageLabel(stage)}
-            </h2>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="section-title font-display text-lg tracking-wider text-foreground/60">
+                {getStageLabel(stage).toUpperCase()}
+              </div>
+              <span className="ml-auto text-xs text-foreground/25 font-medium tracking-wider">
+                {stageMatches.length} PARTIDOS
+              </span>
+            </div>
             <div className="space-y-2">
               {stageMatches.map((m, i) => (
                 <MatchCard key={m.id} match={m} index={i} />
@@ -53,13 +74,6 @@ export default async function MatchesPage() {
           </section>
         )
       })}
-
-      {matches.length === 0 && (
-        <div className="text-center py-16 text-white/30">
-          <p className="text-4xl mb-3">📅</p>
-          <p>El calendario se cargará próximamente</p>
-        </div>
-      )}
     </div>
   )
 }

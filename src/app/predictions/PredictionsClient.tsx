@@ -1,9 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { TrendingUp, Target, Star } from 'lucide-react'
-import { Card } from '@/components/ui/Card'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Target, Star, TrendingUp, CheckCircle } from 'lucide-react'
 import PredictionCard from '@/components/prediction/PredictionCard'
 import MatchCard from '@/components/match/MatchCard'
 import type { Match, Prediction } from '@/types'
@@ -16,7 +15,7 @@ interface Props {
   correctPredictions: number
 }
 
-type Tab = 'mis-predicciones' | 'predecir'
+type Tab = 'predecir' | 'mis-predicciones'
 
 export default function PredictionsClient({
   userId,
@@ -27,103 +26,175 @@ export default function PredictionsClient({
 }: Props) {
   const [tab, setTab] = useState<Tab>('predecir')
 
-  const predictedIds = new Set(predictions.map(p => p.match_id))
-  const unpredicted = upcomingMatches.filter(m => !predictedIds.has(m.id))
-  const predicted = upcomingMatches.filter(m => predictedIds.has(m.id))
+  const predictedIds  = new Set(predictions.map(p => p.match_id))
+  const unpredicted   = upcomingMatches.filter(m => !predictedIds.has(m.id))
+  const predicted     = upcomingMatches.filter(m => predictedIds.has(m.id))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+
+      {/* ── Header ── */}
       <div>
-        <h1 className="text-2xl font-black text-white">Mis predicciones</h1>
-        <p className="text-white/40 text-sm mt-1">Predice antes del inicio de cada partido</p>
+        <h1 className="section-title font-display text-3xl tracking-wider text-foreground">
+          MIS PREDICCIONES
+        </h1>
+        <p className="text-foreground/40 text-sm mt-2 ml-3.5">
+          Pronostica antes del inicio de cada partido
+        </p>
       </div>
 
-      {/* Stats */}
+      {/* ── Stats row ── */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { icon: Star, label: 'Puntos', val: totalPoints, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
-          { icon: Target, label: 'Acertadas', val: correctPredictions, color: 'text-green-400', bg: 'bg-green-400/10' },
-          { icon: TrendingUp, label: 'Total', val: predictions.length, color: 'text-blue-400', bg: 'bg-blue-400/10' },
-        ].map(({ icon: Icon, label, val, color, bg }) => (
-          <Card key={label} padding="sm" className="text-center">
-            <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center mx-auto mb-2`}>
-              <Icon className={`w-4 h-4 ${color}`} />
-            </div>
-            <p className={`text-2xl font-black ${color}`}>{val}</p>
-            <p className="text-xs text-white/40">{label}</p>
-          </Card>
+          {
+            icon: Star,
+            val: totalPoints,
+            label: 'Puntos',
+            sub: 'totales',
+            color: 'text-gold-300',
+            bg: 'rgba(201,162,39,0.1)',
+            border: 'rgba(201,162,39,0.2)',
+          },
+          {
+            icon: CheckCircle,
+            val: correctPredictions,
+            label: 'Acertadas',
+            sub: 'predicciones',
+            color: 'text-green-400',
+            bg: 'rgba(34,197,94,0.08)',
+            border: 'rgba(34,197,94,0.2)',
+          },
+          {
+            icon: TrendingUp,
+            val: predictions.length,
+            label: 'Total',
+            sub: 'realizadas',
+            color: 'text-blue-400',
+            bg: 'rgba(59,130,246,0.08)',
+            border: 'rgba(59,130,246,0.2)',
+          },
+        ].map(({ icon: Icon, val, label, sub, color, bg, border }) => (
+          <div
+            key={label}
+            className="wc-card p-4 text-center"
+            style={{ background: bg, borderColor: border }}
+          >
+            <Icon className={`w-5 h-5 ${color} mx-auto mb-2 opacity-80`} />
+            <div className={`font-display text-4xl leading-none ${color}`}>{val}</div>
+            <div className="text-sm font-semibold text-foreground/60 mt-1">{label}</div>
+            <div className="text-xs text-foreground/25">{sub}</div>
+          </div>
         ))}
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-white/5 p-1 rounded-xl">
+      {/* ── Tab switcher ── */}
+      <div className="flex gap-1 p-1 rounded-xl"
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
         {(['predecir', 'mis-predicciones'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-              tab === t
-                ? 'bg-white/10 text-white'
-                : 'text-white/40 hover:text-white/70'
-            }`}
+            className="relative flex-1 py-2.5 rounded-lg text-sm font-medium transition-all"
+            style={{
+              color: tab === t ? '#c9a227' : 'rgba(238,242,247,0.4)',
+            }}
           >
-            {t === 'predecir' ? `Predecir (${unpredicted.length})` : `Mis pronós. (${predictions.length})`}
+            {tab === t && (
+              <motion.span
+                layoutId="pred-tab"
+                className="absolute inset-0 rounded-lg"
+                style={{ background: 'rgba(201,162,39,0.08)', border: '1px solid rgba(201,162,39,0.2)' }}
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              />
+            )}
+            <span className="relative">
+              {t === 'predecir'
+                ? `Predecir (${unpredicted.length})`
+                : `Mis pronós. (${predictions.length})`
+              }
+            </span>
           </button>
         ))}
       </div>
 
-      {/* Content */}
-      {tab === 'predecir' ? (
-        <div className="space-y-4">
-          {unpredicted.length > 0 && (
-            <section>
-              <p className="text-xs text-white/30 uppercase tracking-wider mb-2">Sin predicción</p>
-              <div className="space-y-2">
-                {unpredicted.map((m, i) => (
-                  <MatchCard key={m.id} match={m} index={i} />
-                ))}
-              </div>
-            </section>
-          )}
-          {predicted.length > 0 && (
-            <section>
-              <p className="text-xs text-white/30 uppercase tracking-wider mb-2">Ya pronosticados</p>
-              <div className="space-y-2">
-                {predicted.map((m, i) => {
-                  const pred = predictions.find(p => p.match_id === m.id)
-                  return (
-                    <MatchCard
-                      key={m.id}
-                      match={m}
-                      index={i}
-                      showPrediction
-                      predictedHome={pred?.predicted_home_score}
-                      predictedAway={pred?.predicted_away_score}
-                    />
-                  )
-                })}
-              </div>
-            </section>
-          )}
-          {unpredicted.length === 0 && predicted.length === 0 && (
-            <div className="text-center py-12 text-white/30">
-              <p className="text-4xl mb-3">✅</p>
-              <p>¡Todos los próximos partidos pronosticados!</p>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {predictions.length === 0 ? (
-            <div className="text-center py-12 text-white/30">
-              <p className="text-4xl mb-3">🎯</p>
-              <p>Aún no has hecho predicciones</p>
+      {/* ── Content ── */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={tab}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.2 }}
+        >
+          {tab === 'predecir' ? (
+            <div className="space-y-6">
+              {unpredicted.length > 0 && (
+                <section>
+                  <p className="text-xs font-medium text-foreground/30 uppercase tracking-widest mb-3">
+                    SIN PRONÓSTICO ({unpredicted.length})
+                  </p>
+                  <div className="space-y-2">
+                    {unpredicted.map((m, i) => (
+                      <MatchCard key={m.id} match={m} index={i} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {predicted.length > 0 && (
+                <section>
+                  <p className="text-xs font-medium text-foreground/30 uppercase tracking-widest mb-3">
+                    YA PRONOSTICADOS ({predicted.length})
+                  </p>
+                  <div className="space-y-2">
+                    {predicted.map((m, i) => {
+                      const pred = predictions.find(p => p.match_id === m.id)
+                      return (
+                        <MatchCard
+                          key={m.id}
+                          match={m}
+                          index={i}
+                          showPrediction
+                          predictedHome={pred?.predicted_home_score}
+                          predictedAway={pred?.predicted_away_score}
+                        />
+                      )
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {unpredicted.length === 0 && predicted.length === 0 && (
+                <div className="wc-card p-12 text-center">
+                  <div className="text-5xl mb-4">✅</div>
+                  <p className="font-display text-xl tracking-wider text-foreground/30">
+                    TODO PRONOSTICADO
+                  </p>
+                  <p className="text-sm text-foreground/20 mt-2">
+                    ¡Has pronosticado todos los próximos partidos!
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
-            predictions.map(p => <PredictionCard key={p.id} prediction={p} />)
+            <div className="space-y-2">
+              {predictions.length === 0 ? (
+                <div className="wc-card p-12 text-center">
+                  <div className="text-5xl mb-4">🎯</div>
+                  <p className="font-display text-xl tracking-wider text-foreground/30">
+                    SIN PREDICCIONES
+                  </p>
+                  <p className="text-sm text-foreground/20 mt-2">
+                    Aún no has hecho ningún pronóstico
+                  </p>
+                </div>
+              ) : (
+                predictions.map(p => <PredictionCard key={p.id} prediction={p} />)
+              )}
+            </div>
           )}
-        </div>
-      )}
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }

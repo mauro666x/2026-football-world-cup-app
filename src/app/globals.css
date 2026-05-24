@@ -1,49 +1,230 @@
 @import "tailwindcss";
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
+  --background: #070b14;
+  --foreground: #eef2f7;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+  --font-display: var(--font-bebas), 'Impact', sans-serif;
+  --font-sans: var(--font-outfit), system-ui, sans-serif;
+  --font-mono: var(--font-outfit), monospace;
 }
 
-* {
-  box-sizing: border-box;
+@theme {
+  /* Navy palette */
+  --color-navy:     #070b14;
+  --color-navy-800: #0c1525;
+  --color-navy-700: #101e30;
+  --color-navy-600: #1a2e44;
+
+  /* Trophy gold palette */
+  --color-gold:     #c9a227;
+  --color-gold-300: #f0c040;
+  --color-gold-600: #9a7618;
+  --color-gold-900: #4a380a;
 }
 
-html {
-  scroll-behavior: smooth;
+/* ── Keyframes ────────────────────────────────────────────────── */
+
+@keyframes trophy-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33%       { transform: translateY(-8px) rotate(1.5deg); }
+  66%       { transform: translateY(-4px) rotate(-1deg); }
 }
+
+@keyframes live-ping-dot {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gold-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes score-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* ── Base ────────────────────────────────────────────────────── */
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
+/* Gold-tinted scrollbar */
+::-webkit-scrollbar         { width: 4px; height: 4px; }
+::-webkit-scrollbar-track   { background: transparent; }
+::-webkit-scrollbar-thumb   { background: rgba(201,162,39,0.25); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(201,162,39,0.5); }
 
-/* Remove number input spinners */
+/* Number inputs */
 input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; }
 
 .safe-area-pb { padding-bottom: env(safe-area-inset-bottom); }
+
+/* ── Design Utilities ────────────────────────────────────────── */
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #f0c040 0%, #c9a227 55%, #9a7618 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
 .text-gradient {
   background: linear-gradient(135deg, #22c55e, #16a34a);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Animated shimmer on gold text */
+.text-shimmer-gold {
+  background: linear-gradient(
+    90deg,
+    #9a7618 0%,
+    #c9a227 25%,
+    #f0c040 45%,
+    #fad96a 50%,
+    #f0c040 55%,
+    #c9a227 75%,
+    #9a7618 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gold-shimmer 5s linear infinite;
+}
+
+/* Hero gradient mesh */
+.hero-mesh {
+  background:
+    radial-gradient(ellipse 80% 70% at 10% 50%, rgba(26,86,219,0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 90% 10%, rgba(201,162,39,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 55% at 50% 100%, rgba(26,86,219,0.10) 0%, transparent 55%),
+    #070b14;
+}
+
+/* Card base */
+.wc-card {
+  background: #0c1525;
+  border: 1px solid rgba(201,162,39,0.12);
+  border-radius: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wc-card-hover:hover,
+.wc-card.hoverable:hover {
+  border-color: rgba(201,162,39,0.28);
+  box-shadow: 0 6px 32px rgba(201,162,39,0.07);
+}
+
+/* Live match card */
+.wc-card-live {
+  background: linear-gradient(135deg, rgba(239,68,68,0.06) 0%, #0c1525 50%);
+  border: 1px solid rgba(239,68,68,0.28);
+  border-radius: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.wc-card-live:hover {
+  border-color: rgba(239,68,68,0.4);
+}
+
+/* Section title with gold left bar */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+}
+
+.section-title::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 1.1em;
+  background: linear-gradient(180deg, #f0c040, #c9a227);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Subtle diagonal stripe overlay for hero */
+.stadium-pattern {
+  background-image: repeating-linear-gradient(
+    -55deg,
+    transparent,
+    transparent 18px,
+    rgba(255,255,255,0.012) 18px,
+    rgba(255,255,255,0.012) 36px
+  );
+}
+
+/* Gold horizontal divider */
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(201,162,39,0.3) 50%, transparent 100%);
+}
+
+/* Animation helpers */
+.animate-trophy    { animation: trophy-float 3.5s ease-in-out infinite; }
+.animate-fade-up   { animation: fade-up 0.5s ease-out both; }
+.animate-scale-in  { animation: scale-in 0.35s ease-out both; }
+
+/* Stagger delays */
+.delay-1 { animation-delay: 0.06s; }
+.delay-2 { animation-delay: 0.12s; }
+.delay-3 { animation-delay: 0.18s; }
+.delay-4 { animation-delay: 0.24s; }
+.delay-5 { animation-delay: 0.30s; }
+.delay-6 { animation-delay: 0.36s; }
+.delay-7 { animation-delay: 0.42s; }
+
+/* Position indicators for group tables */
+.pos-q  { background: #22c55e; }  /* qualified */
+.pos-p  { background: #f59e0b; }  /* playoff */
+.pos-o  { background: rgba(255,255,255,0.1); } /* out */
+
+/* Bottom nav pill indicator */
+.nav-pill-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 2px;
+  background: linear-gradient(90deg, #f0c040, #c9a227);
+  border-radius: 0 0 3px 3px;
+}
+
+/* Pulse ring for live indicator */
+.live-ring {
+  animation: live-ping-dot 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
 }

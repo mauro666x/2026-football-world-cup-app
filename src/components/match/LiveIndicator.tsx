@@ -1,6 +1,5 @@
 'use client'
 
-import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 interface LiveIndicatorProps {
@@ -10,26 +9,24 @@ interface LiveIndicatorProps {
 }
 
 export default function LiveIndicator({ minute, className, size = 'md' }: LiveIndicatorProps) {
+  const dotSize = size === 'sm' ? 'w-2 h-2' : 'w-2.5 h-2.5'
+
   return (
     <div className={cn('inline-flex items-center gap-1.5', className)}>
-      <div className="relative flex">
-        <motion.span
-          className={cn(
-            'absolute inline-flex rounded-full bg-red-400 opacity-75',
-            size === 'sm' ? 'h-2 w-2' : 'h-2.5 w-2.5'
-          )}
-          animate={{ scale: [1, 1.8, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
+      {/* Pulsing dot */}
+      <div className="relative flex items-center justify-center">
+        <span
+          className={cn('absolute rounded-full bg-red-500 live-ring', dotSize)}
         />
-        <span className={cn(
-          'relative inline-flex rounded-full bg-red-500',
-          size === 'sm' ? 'h-2 w-2' : 'h-2.5 w-2.5'
-        )} />
+        <span className={cn('relative rounded-full bg-red-500', dotSize)} />
       </div>
-      <span className={cn(
-        'font-bold text-red-400 uppercase tracking-wide',
-        size === 'sm' ? 'text-xs' : 'text-xs'
-      )}>
+
+      <span
+        className={cn(
+          'font-display tracking-widest text-red-400',
+          size === 'sm' ? 'text-xs' : 'text-sm'
+        )}
+      >
         {minute ? `${minute}'` : 'EN VIVO'}
       </span>
     </div>
