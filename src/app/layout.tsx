@@ -21,9 +21,22 @@ const outfit = Outfit({
 })
 
 export const metadata: Metadata = {
-  title: 'Mundial 2026 — Predicciones',
+  title: {
+    default: 'Mundial 2026 — Predicciones',
+    template: '%s | Mundial 2026',
+  },
   description: 'App de predicciones y seguimiento en tiempo real del Mundial FIFA 2026',
   manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/icons/icon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icons/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icons/icon-96.png', sizes: '96x96', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -33,6 +46,7 @@ export const metadata: Metadata = {
     title: 'Mundial 2026 — Predicciones',
     description: 'Predice los resultados del Mundial FIFA 2026 en tiempo real',
     type: 'website',
+    images: [{ url: '/fifa-icon.jpg', width: 1200, height: 630 }],
   },
 }
 
@@ -46,9 +60,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-      </head>
+      <head />
       <body
         className={`${bebasNeue.variable} ${outfit.variable} font-sans bg-navy text-foreground min-h-screen antialiased`}
       >

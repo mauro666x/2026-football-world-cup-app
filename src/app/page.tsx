@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Calendar, Users, TrendingUp, Zap, Trophy, Bell, ArrowRight, Target, Star } from 'lucide-react'
 
 export const metadata = {
@@ -76,6 +77,17 @@ export default function HomePage() {
       ══════════════════════════════════════════════ */}
       <section className="relative overflow-hidden rounded-2xl hero-mesh stadium-pattern min-h-[460px] md:min-h-[520px] flex flex-col items-center justify-center text-center px-6 py-16">
 
+        {/* FIFA 2026 branding — background image, right side */}
+        <div className="absolute inset-y-0 right-0 w-1/2 pointer-events-none hidden md:block">
+          <Image
+            src="/fifa-icon.jpg"
+            alt=""
+            fill
+            className="object-cover object-left opacity-[0.07] select-none"
+            aria-hidden
+          />
+        </div>
+
         {/* Decorative glow blobs */}
         <div className="absolute top-0 left-0 w-64 h-64 rounded-full pointer-events-none"
           style={{ background: 'radial-gradient(circle, rgba(26,86,219,0.15) 0%, transparent 70%)', transform: 'translate(-30%, -30%)' }} />
@@ -88,11 +100,20 @@ export default function HomePage() {
           FIFA 2026
         </div>
 
-        {/* Floating ball */}
-        <div className="animate-trophy text-5xl md:text-6xl mb-6 select-none" aria-hidden>⚽</div>
+        {/* Trophy — reemplaza al ⚽ */}
+        <div className="animate-trophy mb-6 select-none relative z-10" aria-hidden>
+          <Image
+            src="/worldcup-icon.png"
+            alt="Copa del Mundo FIFA"
+            width={80}
+            height={80}
+            className="object-contain drop-shadow-[0_0_24px_rgba(201,162,39,0.6)] md:w-24 md:h-24"
+            priority
+          />
+        </div>
 
         {/* Title */}
-        <div className="animate-fade-up">
+        <div className="animate-fade-up relative z-10">
           <div className="font-display text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wider text-foreground/90 leading-none">
             MUNDIAL FIFA
           </div>

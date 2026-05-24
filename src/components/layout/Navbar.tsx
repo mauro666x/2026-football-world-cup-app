@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Home, Users, Calendar, TrendingUp, Trophy, Zap, Menu, X, ArrowRight } from 'lucide-react'
@@ -33,9 +34,15 @@ export default function Navbar() {
 
           {/* ── Logo ── */}
           <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg"
-              style={{ background: 'rgba(201,162,39,0.12)', border: '1px solid rgba(201,162,39,0.25)' }}>
-              ⚽
+            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
+              <Image
+                src="/worldcup-icon.png"
+                alt="Copa del Mundo FIFA 2026"
+                width={32}
+                height={32}
+                className="object-contain drop-shadow-[0_0_6px_rgba(201,162,39,0.5)] group-hover:scale-110 transition-transform duration-200"
+                priority
+              />
             </div>
             <div className="flex items-baseline gap-1 leading-none">
               <span className="font-display text-lg tracking-wider text-foreground/90 group-hover:text-foreground transition-colors">
