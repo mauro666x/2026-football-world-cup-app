@@ -25,11 +25,12 @@ test.describe('Smoke tests', () => {
   test('grupos contiene equipos del sorteo oficial', async ({ page }) => {
     await page.goto('/groups')
     // Equipos clave del sorteo de diciembre 2025
-    await expect(page.getByText('México')).toBeVisible()       // Grupo A
-    await expect(page.getByText('Argentina')).toBeVisible()    // Grupo J
-    await expect(page.getByText('Francia')).toBeVisible()      // Grupo I
-    await expect(page.getByText('Alemania')).toBeVisible()     // Grupo E
-    await expect(page.getByText('Panamá')).toBeVisible()       // Grupo L
+    // exact:true evita matches parciales (ej: "México" en subtítulos de página)
+    await expect(page.getByText('México',   { exact: true }).first()).toBeVisible() // Grupo A
+    await expect(page.getByText('Argentina',{ exact: true }).first()).toBeVisible() // Grupo J
+    await expect(page.getByText('Francia',  { exact: true }).first()).toBeVisible() // Grupo I
+    await expect(page.getByText('Alemania', { exact: true }).first()).toBeVisible() // Grupo E
+    await expect(page.getByText('Panamá',   { exact: true }).first()).toBeVisible() // Grupo L
   })
 
   test('partidos carga sin error', async ({ page }) => {
@@ -43,8 +44,8 @@ test.describe('Smoke tests', () => {
     await expect(page).toHaveTitle(/Equipos/i)
     await expect(page.locator('body')).not.toContainText('No se pudo cargar')
     // Verifica que hay equipos de múltiples grupos
-    await expect(page.getByText('Grupo A')).toBeVisible()
-    await expect(page.getByText('Grupo L')).toBeVisible()
+    await expect(page.getByText('Grupo A').first()).toBeVisible()
+    await expect(page.getByText('Grupo L').first()).toBeVisible()
   })
 
   test('en vivo carga sin error', async ({ page }) => {
