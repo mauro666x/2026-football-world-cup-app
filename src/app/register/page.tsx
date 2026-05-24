@@ -2,16 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase/client'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 
 export default function RegisterPage() {
-  const router = useRouter()
-
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
@@ -32,42 +28,22 @@ export default function RegisterPage() {
     }
 
     try {
-      const supabase = createClient()
-
-      // Check username availability
-      const { data: existing } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', username.toLowerCase())
-        .maybeSingle()
-
-      if (existing) {
-        setError('Ese nombre de usuario ya está en uso')
-        return
-      }
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            username: username.toLowerCase(),
-            display_name: displayName || username,
-          },
-        },
-      })
-
-      if (signUpError) {
-        setError(signUpError.message)
-        return
-      }
-
-      if (data.user) {
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
           username: username.toLowerCase(),
           display_name: displayName || username,
-        })
+        }),
+      })
+
+      const json = await res.json()
+
+      if (!res.ok) {
+        setError(json.error ?? 'Error al crear la cuenta')
+        return
       }
 
       setSuccess(true)
