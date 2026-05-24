@@ -1,65 +1,126 @@
-import Image from "next/image";
+import Link from 'next/link'
+import { Calendar, Users, TrendingUp, Zap, Trophy, Bell } from 'lucide-react'
+import { Card } from '@/components/ui/Card'
 
-export default function Home() {
+const FEATURES = [
+  {
+    icon: TrendingUp,
+    label: 'Predicciones',
+    desc: 'Predice el marcador de cada partido',
+    href: '/predictions',
+    color: 'text-green-400',
+    bg: 'bg-green-400/10',
+  },
+  {
+    icon: Zap,
+    label: 'En Vivo',
+    desc: 'Scores en tiempo real',
+    href: '/live',
+    color: 'text-red-400',
+    bg: 'bg-red-400/10',
+  },
+  {
+    icon: Users,
+    label: 'Grupos',
+    desc: 'Tabla de posiciones de los 12 grupos',
+    href: '/groups',
+    color: 'text-blue-400',
+    bg: 'bg-blue-400/10',
+  },
+  {
+    icon: Calendar,
+    label: 'Partidos',
+    desc: 'Calendario completo del torneo',
+    href: '/matches',
+    color: 'text-purple-400',
+    bg: 'bg-purple-400/10',
+  },
+  {
+    icon: Trophy,
+    label: 'Ranking',
+    desc: 'Compite por el primer lugar',
+    href: '/leaderboard',
+    color: 'text-yellow-400',
+    bg: 'bg-yellow-400/10',
+  },
+  {
+    icon: Bell,
+    label: 'Alertas',
+    desc: 'Notificaciones de tus partidos',
+    href: '/predictions',
+    color: 'text-orange-400',
+    bg: 'bg-orange-400/10',
+  },
+]
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="space-y-12">
+      {/* Hero */}
+      <section className="text-center py-8 md:py-16 space-y-4">
+        <div className="text-6xl md:text-8xl mb-4">🏆</div>
+        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+          Mundial FIFA{' '}
+          <span className="text-gradient">2026</span>
+        </h1>
+        <p className="text-white/50 text-base md:text-lg max-w-md mx-auto">
+          48 selecciones · 104 partidos · 3 países anfitriones
+        </p>
+        <p className="text-white/30 text-sm">11 jun – 19 jul 2026 · USA · México · Canadá</p>
+
+        <div className="flex items-center justify-center gap-3 pt-4">
+          <Link
+            href="/register"
+            className="bg-green-500 hover:bg-green-400 text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-lg shadow-green-500/20"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Empezar a predecir
+          </Link>
+          <Link
+            href="/matches"
+            className="bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3 rounded-xl transition-colors"
           >
-            Documentation
-          </a>
+            Ver partidos
+          </Link>
         </div>
-      </main>
+      </section>
+
+      {/* Features */}
+      <section>
+        <h2 className="text-lg font-semibold text-white/60 mb-4 text-center">¿Qué puedes hacer?</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {FEATURES.map(({ icon: Icon, label, desc, href, color, bg }) => (
+            <Link key={href + label} href={href}>
+              <Card hover className="h-full space-y-2">
+                <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center`}>
+                  <Icon className={`w-5 h-5 ${color}`} />
+                </div>
+                <p className="font-semibold text-white text-sm">{label}</p>
+                <p className="text-xs text-white/40">{desc}</p>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Scoring system */}
+      <section>
+        <Card>
+          <h2 className="font-semibold text-white mb-4">⚡ Sistema de puntuación</h2>
+          <div className="space-y-2">
+            {[
+              { label: 'Resultado exacto (ej: 2-1 y fue 2-1)', pts: '5 pts', color: 'text-green-400' },
+              { label: 'Resultado correcto (victoria/empate)', pts: '3 pts', color: 'text-blue-400' },
+              { label: 'Un marcador correcto', pts: '1 pt', color: 'text-yellow-400' },
+              { label: 'Fallo total', pts: '0 pts', color: 'text-white/30' },
+            ].map(({ label, pts, color }) => (
+              <div key={label} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                <span className="text-sm text-white/60">{label}</span>
+                <span className={`font-bold text-sm ${color}`}>{pts}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </section>
     </div>
-  );
+  )
 }
