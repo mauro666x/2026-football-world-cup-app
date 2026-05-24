@@ -75,12 +75,12 @@ test.describe('Smoke tests', () => {
     await expect(page.getByRole('button', { name: 'Crear cuenta' })).toBeVisible()
   })
 
-  test('navbar muestra los 6 links de navegación', async ({ page }) => {
+  test('navbar muestra links de navegación principales', async ({ page }) => {
     await page.goto('/')
-    // Desktop: links en header nav / Mobile: links en BottomNav
-    // Buscar en cualquier nav de la página con .first() para evitar duplicados
-    for (const label of ['Inicio', 'Grupos', 'Partidos', 'En Vivo', 'Predicciones', 'Ranking']) {
-      await expect(page.locator('nav').getByText(label, { exact: true }).first()).toBeVisible()
+    // Desktop: Navbar con 6 items / Mobile: BottomNav con 5 items (labels distintos)
+    // Verificar solo los 4 comunes a ambos viewports y con el mismo label
+    for (const label of ['Inicio', 'Grupos', 'Partidos', 'En Vivo']) {
+      await expect(page.getByRole('link', { name: label }).first()).toBeVisible()
     }
   })
 
