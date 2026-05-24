@@ -56,6 +56,8 @@ jobs:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pull-requests: write   # necesario para comentar la preview URL en el PR
     outputs:
       deployment-url: ${{ steps.deploy.outputs.url }}
 
