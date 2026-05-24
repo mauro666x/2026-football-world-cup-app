@@ -1,7 +1,12 @@
 import { type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-export async function middleware(request: NextRequest) {
+/**
+ * Proxy (formerly Middleware) — Next.js 16 convention.
+ * Refreshes the Supabase session on every request and enforces
+ * auth redirects for protected pages/API routes.
+ */
+export async function proxy(request: NextRequest) {
   return await updateSession(request)
 }
 
