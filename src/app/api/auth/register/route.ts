@@ -1,14 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-// Service role client — bypasses RLS y email confirmation
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  )
-}
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: Request) {
   const { email, password, username, display_name } = await request.json()
@@ -17,7 +8,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
   }
 
-  const admin = getAdminClient()
+  const admin = createAdminClient()
 
   // 1. Verificar que el username no esté en uso
   const { data: existing } = await admin

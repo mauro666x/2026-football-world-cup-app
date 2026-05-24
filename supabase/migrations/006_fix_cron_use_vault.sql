@@ -2,10 +2,11 @@
 -- MIGRACIÓN DE SEGURIDAD: Mover service_role_key a Supabase Vault
 -- =============================================================================
 -- ANTES DE APLICAR ESTA MIGRACIÓN:
---   1. Rotar la Service Role Key en Supabase Dashboard:
---      Project Settings → API → Service role secret → "Roll key"
---   2. Insertar la NUEVA key en Vault ejecutando en SQL Editor:
---      SELECT vault.create_secret('<NUEVA_SERVICE_ROLE_KEY>', 'service_role_key');
+--   1. Rotar la JWT Secret en Supabase Dashboard:
+--      Project Settings → JWT Keys → (ya rotada automáticamente)
+--   2. Insertar la nueva Secret API key en Vault ejecutando en SQL Editor:
+--      SELECT vault.create_secret('<sb_secret_...>', 'service_role_key');
+--      (la encuentras en: Settings → API Keys → Publishable and secret API keys)
 -- =============================================================================
 
 -- Eliminar los cron jobs existentes (que usan la key comprometida hardcodeada)

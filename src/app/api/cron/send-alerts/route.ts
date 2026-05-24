@@ -1,15 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import webpush from 'web-push'
 import { addMinutes, parseISO, isWithinInterval, subMinutes } from 'date-fns'
-
-function getServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  )
-}
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -24,7 +16,7 @@ export async function GET(request: Request) {
     process.env.VAPID_PRIVATE_KEY!
   )
 
-  const supabase = getServiceClient()
+  const supabase = createAdminClient()
   const now = new Date()
 
   // Find matches starting in ~60 min or ~5 min

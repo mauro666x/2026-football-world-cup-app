@@ -1,16 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getWorldCupMatches, mapFDStatus, mapFDStage } from '@/lib/api/football-data'
 import { calculateMatchPoints } from '@/lib/scoring'
-
-// Supabase service role client (bypasses RLS)
-function getServiceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  )
-}
 
 export async function GET(request: Request) {
   // Verify cron secret
@@ -20,7 +11,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const supabase = getServiceClient()
+    const supabase = createAdminClient()
     const fdMatches = await getWorldCupMatches()
     let updated = 0
 
@@ -74,7 +65,7 @@ export async function GET(request: Request) {
 }
 
 async function updatePredictionPoints(
-  supabase: ReturnType<typeof getServiceClient>,
+  supabase: ReturnType<typeof createAdminClient>,
   matchId: number,
   actualHome: number,
   actualAway: number
