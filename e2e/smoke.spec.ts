@@ -8,8 +8,9 @@ test.describe('Smoke tests', () => {
   test('home page carga y muestra "MUNDIAL"', async ({ page }) => {
     await page.goto('/')
     await expect(page).toHaveTitle(/Mundial 2026/i)
-    await expect(page.getByText('MUNDIAL', { exact: false })).toBeVisible()
-    await expect(page.getByText('2026')).toBeVisible()
+    // La home tiene múltiples elementos con "MUNDIAL" — verificar al menos uno visible
+    await expect(page.getByText('MUNDIAL', { exact: false }).first()).toBeVisible()
+    await expect(page.getByText('2026').first()).toBeVisible()
   })
 
   test('grupos muestra los 12 grupos oficiales', async ({ page }) => {
@@ -24,11 +25,12 @@ test.describe('Smoke tests', () => {
   test('grupos contiene equipos del sorteo oficial', async ({ page }) => {
     await page.goto('/groups')
     // Equipos clave del sorteo de diciembre 2025
-    await expect(page.getByText('México')).toBeVisible()       // Grupo A
-    await expect(page.getByText('Argentina')).toBeVisible()    // Grupo J
-    await expect(page.getByText('Francia')).toBeVisible()      // Grupo I
-    await expect(page.getByText('Alemania')).toBeVisible()     // Grupo E
-    await expect(page.getByText('Panamá')).toBeVisible()       // Grupo L
+    // exact:true evita matches parciales (ej: "México" en subtítulos de página)
+    await expect(page.getByText('México',   { exact: true }).first()).toBeVisible() // Grupo A
+    await expect(page.getByText('Argentina',{ exact: true }).first()).toBeVisible() // Grupo J
+    await expect(page.getByText('Francia',  { exact: true }).first()).toBeVisible() // Grupo I
+    await expect(page.getByText('Alemania', { exact: true }).first()).toBeVisible() // Grupo E
+    await expect(page.getByText('Panamá',   { exact: true }).first()).toBeVisible() // Grupo L
   })
 
   test('partidos carga sin error', async ({ page }) => {
@@ -42,8 +44,8 @@ test.describe('Smoke tests', () => {
     await expect(page).toHaveTitle(/Equipos/i)
     await expect(page.locator('body')).not.toContainText('No se pudo cargar')
     // Verifica que hay equipos de múltiples grupos
-    await expect(page.getByText('Grupo A')).toBeVisible()
-    await expect(page.getByText('Grupo L')).toBeVisible()
+    await expect(page.getByText('Grupo A').first()).toBeVisible()
+    await expect(page.getByText('Grupo L').first()).toBeVisible()
   })
 
   test('en vivo carga sin error', async ({ page }) => {
@@ -73,11 +75,12 @@ test.describe('Smoke tests', () => {
     await expect(page.getByRole('button', { name: 'Crear cuenta' })).toBeVisible()
   })
 
-  test('navbar muestra los 6 links de navegación', async ({ page }) => {
+  test('navbar muestra links de navegación principales', async ({ page }) => {
     await page.goto('/')
-    const nav = page.locator('header nav')
-    for (const label of ['Inicio', 'Grupos', 'Partidos', 'En Vivo', 'Predicciones', 'Ranking']) {
-      await expect(nav.getByText(label, { exact: true })).toBeVisible()
+    // Desktop: Navbar con 6 items / Mobile: BottomNav con 5 items (labels distintos)
+    // Verificar solo los 4 comunes a ambos viewports y con el mismo label
+    for (const label of ['Inicio', 'Grupos', 'Partidos', 'En Vivo']) {
+      await expect(page.getByRole('link', { name: label }).first()).toBeVisible()
     }
   })
 

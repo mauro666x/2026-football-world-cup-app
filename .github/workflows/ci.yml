@@ -13,7 +13,9 @@ concurrency:
 env:
   VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
+  # URL pública de producción (sin protección Vercel, alias permanente)
+  PRODUCTION_URL: 'https://26fifaworldcup.vercel.app'
 
 jobs:
   # ─────────────────────────────────────────────────────────────
@@ -54,6 +56,8 @@ jobs:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pull-requests: write   # necesario para comentar la preview URL en el PR
     outputs:
       deployment-url: ${{ steps.deploy.outputs.url }}
 
@@ -73,6 +77,15 @@ jobs:
 
       - name: Build project artifacts
         run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          # Pasar explícitamente para que el proxy/middleware los reciba baked-in
+          NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY:  ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY:     ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FOOTBALL_DATA_API_KEY:         ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          VAPID_PRIVATE_KEY:             ${{ secrets.VAPID_PRIVATE_KEY }}
+          CRON_SECRET:                   ${{ secrets.CRON_SECRET }}
 
       - name: Deploy to Vercel
         id: deploy
@@ -90,16 +103,20 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `### 🚀 Preview deployment\n\n**URL:** ${{ steps.deploy.outputs.url }}\n\nE2E tests se ejecutarán automáticamente contra esta URL.`
+              body: `### 🚀 Preview deployment\n\n**URL:** ${{ steps.deploy.outputs.url }}\n\n> E2E tests se ejecutan solo en \`main\` (URLs de producción pública). Usa el preview link para revisión manual.`
             })
 
   # ─────────────────────────────────────────────────────────────
-  # JOB 3: E2E tests contra la URL desplegada
+  # JOB 3: E2E — solo en main contra la URL de producción pública
+  # Las URLs de preview de Vercel tienen protección de acceso,
+  # por lo que los tests se ejecutan contra el alias de producción.
   # ─────────────────────────────────────────────────────────────
   e2e:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
     needs: deploy
+    # Solo en push a main — los previews de PRs tienen Vercel auth protection
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     timeout-minutes: 15
 
     steps:
@@ -119,13 +136,14 @@ jobs:
       - name: Run smoke tests
         run: npx playwright test e2e/smoke.spec.ts
         env:
-          BASE_URL: ${{ needs.deploy.outputs.deployment-url }}
+          # Usar alias de producción público, no la URL de deployment temporal
+          BASE_URL: ${{ env.PRODUCTION_URL }}
           CI: true
 
       - name: Run auth tests
         run: npx playwright test e2e/auth.spec.ts
         env:
-          BASE_URL:          ${{ needs.deploy.outputs.deployment-url }}
+          BASE_URL:          ${{ env.PRODUCTION_URL }}
           E2E_TEST_EMAIL:    ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
           CI: true

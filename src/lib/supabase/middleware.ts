@@ -29,7 +29,8 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Pages that require auth
-  const protectedPages = ['/predictions', '/leaderboard']
+  // Leaderboard is public — anyone can see rankings without logging in
+  const protectedPages = ['/predictions']
   const isProtectedPage = protectedPages.some(p => pathname.startsWith(p))
 
   // API routes that require auth (beyond their own getUser() check — belt & suspenders)
