@@ -5,6 +5,7 @@ import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import BottomNav from '@/components/layout/BottomNav'
 import Providers from './providers'
+import AuthHashHandler from '@/components/auth/AuthHashHandler'
 
 const bebasNeue = Bebas_Neue({
   weight: '400',
@@ -65,6 +66,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         className={`${bebasNeue.variable} ${outfit.variable} font-sans bg-navy text-foreground min-h-screen antialiased`}
       >
         <Providers>
+          {/* Detecta tokens de Supabase en el hash y redirige al flujo correcto */}
+          <AuthHashHandler />
           <Navbar />
           <main className="max-w-6xl mx-auto px-4 pb-24 md:pb-10 pt-6">
             {children}
