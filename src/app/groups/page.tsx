@@ -45,7 +45,7 @@ export default async function GroupsPage() {
           FASE DE GRUPOS
         </h1>
         <p className="text-foreground/40 text-sm mt-2 ml-3.5">
-          12 grupos · 4 equipos cada uno · 48 partidos
+          12 grupos · 4 equipos cada uno · 72 partidos
         </p>
       </div>
 
@@ -106,7 +106,7 @@ export default async function GroupsPage() {
 
                   {standings.length > 0
                     ? standings.map((s, i) => {
-                        const posColor = POS_COLORS[i]
+                        const posColor = s.played > 0 ? POS_COLORS[i] : { cls: 'bg-white/10', title: 'Por jugar' }
                         return (
                           <div
                             key={s.team.id}

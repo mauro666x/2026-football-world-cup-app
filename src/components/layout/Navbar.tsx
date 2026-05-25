@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Home, Users, Calendar, TrendingUp, Trophy, Zap, Menu, X, ArrowRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Home, Users, Calendar, TrendingUp, Trophy, Zap, Menu, X, ArrowRight, LogOut, User } from 'lucide-react'
+import { cn, getAvatarInitials } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import type { User as SupabaseUser } from '@supabase/supabase-js'
 
 const NAV_ITEMS = [
   { href: '/', label: 'Inicio', icon: Home },
@@ -20,6 +22,60 @@ const NAV_ITEMS = [
 export default function Navbar() {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [user, setUser] = useState<SupabaseUser | null>(null)
+  const [points, setPoints] = useState<number>(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    // Get initial session
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+      if (user) {
+        // Fetch points from profile
+        supabase
+          .from('profiles')
+          .select('points')
+          .eq('id', user.id)
+          .single()
+          .then(({ data }) => {
+            if (data) setPoints(data.points ?? 0)
+          })
+      }
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('points')
+          .eq('id', session.user.id)
+          .single()
+        if (data) setPoints(data.points ?? 0)
+      } else {
+        setPoints(0)
+      }
+      setLoading(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  const handleLogout = async () => {
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      window.location.href = '/'
+    } catch (err) {
+      console.error('Error logging out:', err)
+    }
+  }
 
   return (
     <>
@@ -90,16 +146,51 @@ export default function Navbar() {
 
           {/* ── Actions ── */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Link
-              href="/login"
-              className="hidden sm:flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-all text-gold hover:text-gold-300"
-              style={{ border: '1px solid rgba(201,162,39,0.28)' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,162,39,0.08)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
-              Entrar
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            {loading ? (
+              <div className="w-8 h-8 rounded-full border border-white/10 animate-pulse hidden sm:block" />
+            ) : user ? (
+              <div className="flex items-center gap-3">
+                {/* Points Badge */}
+                <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-gold/10 border border-gold/25 text-gold">
+                  <Trophy className="w-3.5 h-3.5" />
+                  <span>{points} pts</span>
+                </div>
+
+                {/* Profile Link */}
+                <Link
+                  href="/profile"
+                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all text-white/80 hover:text-white hover:bg-white/5 border border-white/5"
+                >
+                  <div className="w-5 h-5 rounded-full bg-gradient-gold p-0.5 flex items-center justify-center text-[9px] font-bold text-navy">
+                    {getAvatarInitials(user.user_metadata?.display_name ?? user.user_metadata?.username ?? 'U')}
+                  </div>
+                  <span className="max-w-[100px] truncate hidden lg:inline">
+                    {user.user_metadata?.display_name ?? user.user_metadata?.username}
+                  </span>
+                </Link>
+
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="hidden sm:flex items-center justify-center p-2 rounded-lg text-foreground/50 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  aria-label="Cerrar sesión"
+                  title="Cerrar sesión"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden sm:flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-all text-gold hover:text-gold-300"
+                style={{ border: '1px solid rgba(201,162,39,0.28)' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(201,162,39,0.08)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                Entrar
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
 
             {/* Mobile menu toggle */}
             <button
@@ -165,17 +256,42 @@ export default function Navbar() {
               })}
             </nav>
 
-            {/* Mobile login */}
+            {/* Mobile login / profile */}
             <div className="px-4 pb-4">
-              <Link
-                href="/login"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all text-navy"
-                style={{ background: 'linear-gradient(135deg, #f0c040, #c9a227)' }}
-              >
-                Entrar a tu cuenta
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              {loading ? (
+                <div className="h-11 w-full bg-white/5 rounded-xl animate-pulse" />
+              ) : user ? (
+                <div className="space-y-2">
+                  <Link
+                    href="/profile"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all text-white border border-white/10 hover:bg-white/5"
+                  >
+                    <User className="w-4 h-4" />
+                    Mi Perfil ({points} pts)
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false)
+                      handleLogout()
+                    }}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all text-red-400 bg-red-500/10 border border-red-500/20 hover:bg-red-500/20"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Cerrar sesión
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold text-sm transition-all text-navy"
+                  style={{ background: 'linear-gradient(135deg, #f0c040, #c9a227)' }}
+                >
+                  Entrar a tu cuenta
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              )}
             </div>
           </motion.div>
         )}
