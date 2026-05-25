@@ -66,6 +66,8 @@ jobs:
           name: next-build-${{ github.run_id }}
           path: .next/
           retention-days: 1
+          # .next/ starts with "." — upload-artifact@v4 excludes hidden dirs by default
+          include-hidden-files: true
 
   # ─────────────────────────────────────────────────────────────
   # JOB 2: E2E — corre ANTES del deploy

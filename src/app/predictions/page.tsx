@@ -29,8 +29,7 @@ export default async function PredictionsPage() {
       .select(`*, home_team:teams!matches_home_team_id_fkey(*), away_team:teams!matches_away_team_id_fkey(*)`)
       .eq('status', 'SCHEDULED')
       .eq('stage', 'GROUP')
-      .order('match_date')
-      .limit(20),
+      .order('match_date'),
   ])
 
   const userPredictions = (predictions ?? []) as Prediction[]

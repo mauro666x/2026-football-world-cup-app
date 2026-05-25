@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Target, Star, TrendingUp, CheckCircle } from 'lucide-react'
+import InlineMatchCard from '@/components/prediction/InlineMatchCard'
 import PredictionCard from '@/components/prediction/PredictionCard'
-import MatchCard from '@/components/match/MatchCard'
 import type { Match, Prediction } from '@/types'
 
 interface Props {
@@ -39,7 +39,7 @@ export default function PredictionsClient({
           MIS PREDICCIONES
         </h1>
         <p className="text-foreground/40 text-sm mt-2 ml-3.5">
-          Pronostica antes del inicio de cada partido
+          Pronostica antes del inicio de cada partido — toca una tarjeta para predecir
         </p>
       </div>
 
@@ -109,7 +109,7 @@ export default function PredictionsClient({
             )}
             <span className="relative">
               {t === 'predecir'
-                ? `Predecir (${unpredicted.length})`
+                ? `Predecir (${upcomingMatches.length})`
                 : `Mis pronós. (${predictions.length})`
               }
             </span>
@@ -128,6 +128,21 @@ export default function PredictionsClient({
         >
           {tab === 'predecir' ? (
             <div className="space-y-6">
+
+              {/* No matches at all */}
+              {upcomingMatches.length === 0 && (
+                <div className="wc-card p-12 text-center">
+                  <div className="text-5xl mb-4">📅</div>
+                  <p className="font-display text-xl tracking-wider text-foreground/30">
+                    NO HAY PARTIDOS PRÓXIMOS
+                  </p>
+                  <p className="text-sm text-foreground/20 mt-2">
+                    Los partidos de fase de grupos comienzan el 11 de junio de 2026
+                  </p>
+                </div>
+              )}
+
+              {/* Pending predictions */}
               {unpredicted.length > 0 && (
                 <section>
                   <p className="text-xs font-medium text-foreground/30 uppercase tracking-widest mb-3">
@@ -135,48 +150,52 @@ export default function PredictionsClient({
                   </p>
                   <div className="space-y-2">
                     {unpredicted.map((m, i) => (
-                      <MatchCard key={m.id} match={m} index={i} />
+                      <InlineMatchCard
+                        key={m.id}
+                        match={m}
+                        userId={userId}
+                        index={i}
+                      />
                     ))}
                   </div>
                 </section>
               )}
 
+              {/* Already predicted */}
               {predicted.length > 0 && (
                 <section>
                   <p className="text-xs font-medium text-foreground/30 uppercase tracking-widest mb-3">
                     YA PRONOSTICADOS ({predicted.length})
                   </p>
                   <div className="space-y-2">
-                    {predicted.map((m, i) => {
-                      const pred = predictions.find(p => p.match_id === m.id)
-                      return (
-                        <MatchCard
-                          key={m.id}
-                          match={m}
-                          index={i}
-                          showPrediction
-                          predictedHome={pred?.predicted_home_score}
-                          predictedAway={pred?.predicted_away_score}
-                        />
-                      )
-                    })}
+                    {predicted.map((m, i) => (
+                      <InlineMatchCard
+                        key={m.id}
+                        match={m}
+                        userId={userId}
+                        index={i}
+                      />
+                    ))}
                   </div>
                 </section>
               )}
 
-              {unpredicted.length === 0 && predicted.length === 0 && (
-                <div className="wc-card p-12 text-center">
-                  <div className="text-5xl mb-4">✅</div>
-                  <p className="font-display text-xl tracking-wider text-foreground/30">
-                    TODO PRONOSTICADO
+              {/* All done */}
+              {upcomingMatches.length > 0 && unpredicted.length === 0 && predicted.length > 0 && (
+                <div className="wc-card p-8 text-center"
+                  style={{ background: 'rgba(34,197,94,0.05)', borderColor: 'rgba(34,197,94,0.2)' }}>
+                  <div className="text-4xl mb-3">🏆</div>
+                  <p className="font-display text-xl tracking-wider text-green-400">
+                    ¡TODO LISTO!
                   </p>
-                  <p className="text-sm text-foreground/20 mt-2">
-                    ¡Has pronosticado todos los próximos partidos!
+                  <p className="text-sm text-foreground/30 mt-2">
+                    Pronosticaste todos los partidos próximos. Toca cualquiera para editar.
                   </p>
                 </div>
               )}
             </div>
           ) : (
+            /* ── Mis predicciones ── */
             <div className="space-y-2">
               {predictions.length === 0 ? (
                 <div className="wc-card p-12 text-center">
@@ -185,7 +204,7 @@ export default function PredictionsClient({
                     SIN PREDICCIONES
                   </p>
                   <p className="text-sm text-foreground/20 mt-2">
-                    Aún no has hecho ningún pronóstico
+                    Aún no has hecho ningún pronóstico. ¡Empieza en la pestaña &quot;Predecir&quot;!
                   </p>
                 </div>
               ) : (
@@ -195,6 +214,14 @@ export default function PredictionsClient({
           )}
         </motion.div>
       </AnimatePresence>
+
+      {/* ── Hint ── */}
+      {tab === 'predecir' && upcomingMatches.length > 0 && (
+        <p className="text-center text-xs text-foreground/20 pb-2">
+          <Target className="inline w-3 h-3 mr-1" />
+          Toca una tarjeta para expandir el formulario de predicción
+        </p>
+      )}
     </div>
   )
 }
