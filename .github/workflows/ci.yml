@@ -14,12 +14,22 @@ env:
   VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
   NODE_VERSION: '22'
-  # URL pública de producción (sin protección Vercel, alias permanente)
-  PRODUCTION_URL: 'https://26fifaworldcup.vercel.app'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Flujo correcto:
+#
+#   PR:   build → e2e (next start local) → deploy preview  (gate: e2e debe pasar)
+#   main: build → e2e (next start local) → deploy producción
+#
+# Los E2E NO dependen de ninguna URL de Vercel — corren contra localhost:3000
+# con `next start`, usando el build del job anterior.
+# Esto evita Vercel Deployment Protection en URLs de preview y garantiza
+# que no se despliega código que no pasa los tests.
+# ─────────────────────────────────────────────────────────────────────────────
 
 jobs:
   # ─────────────────────────────────────────────────────────────
-  # JOB 1: Build + typecheck (rápido, falla antes del deploy)
+  # JOB 1: Build + typecheck
   # ─────────────────────────────────────────────────────────────
   build:
     name: Build & Typecheck
@@ -49,74 +59,23 @@ jobs:
           VAPID_PRIVATE_KEY:             ${{ secrets.VAPID_PRIVATE_KEY }}
           CRON_SECRET:                   ${{ secrets.CRON_SECRET }}
 
-  # ─────────────────────────────────────────────────────────────
-  # JOB 2: Deploy a Vercel (preview en PRs, producción en main)
-  # ─────────────────────────────────────────────────────────────
-  deploy:
-    name: Deploy to Vercel
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      pull-requests: write   # necesario para comentar la preview URL en el PR
-    outputs:
-      deployment-url: ${{ steps.deploy.outputs.url }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      # Compartir el build con el job de E2E (evita recompilar)
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-
-      - name: Pull Vercel environment
-        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build project artifacts
-        run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          # Pasar explícitamente para que el proxy/middleware los reciba baked-in
-          NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_VAPID_PUBLIC_KEY:  ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY:     ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          FOOTBALL_DATA_API_KEY:         ${{ secrets.FOOTBALL_DATA_API_KEY }}
-          VAPID_PRIVATE_KEY:             ${{ secrets.VAPID_PRIVATE_KEY }}
-          CRON_SECRET:                   ${{ secrets.CRON_SECRET }}
-
-      - name: Deploy to Vercel
-        id: deploy
-        run: |
-          URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$URL" >> $GITHUB_OUTPUT
-          echo "🚀 Deployed to: $URL"
-
-      - name: Comment preview URL on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `### 🚀 Preview deployment\n\n**URL:** ${{ steps.deploy.outputs.url }}\n\n> E2E tests se ejecutan solo en \`main\` (URLs de producción pública). Usa el preview link para revisión manual.`
-            })
+          name: next-build-${{ github.run_id }}
+          path: .next/
+          retention-days: 1
 
   # ─────────────────────────────────────────────────────────────
-  # JOB 3: E2E — solo en main contra la URL de producción pública
-  # Las URLs de preview de Vercel tienen protección de acceso,
-  # por lo que los tests se ejecutan contra el alias de producción.
+  # JOB 2: E2E — corre ANTES del deploy
+  # Levanta `next start` con el build del job anterior.
+  # Sin BASE_URL → playwright.config usa webServer (next start en CI).
   # ─────────────────────────────────────────────────────────────
   e2e:
     name: E2E Tests (Playwright)
     runs-on: ubuntu-latest
-    needs: deploy
-    # Solo en push a main — los previews de PRs tienen Vercel auth protection
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build
     timeout-minutes: 15
 
     steps:
@@ -130,22 +89,31 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: next-build-${{ github.run_id }}
+          path: .next/
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run smoke tests
-        run: npx playwright test e2e/smoke.spec.ts
+      - name: Run E2E tests (smoke + auth)
+        # Un solo comando = un solo servidor next start para todos los tests.
+        # Separar en dos comandos causa que el segundo no pueda arrancar el servidor
+        # porque next start limpia .next/server/ al cerrarse.
+        run: npx playwright test e2e/smoke.spec.ts e2e/auth.spec.ts
         env:
-          # Usar alias de producción público, no la URL de deployment temporal
-          BASE_URL: ${{ env.PRODUCTION_URL }}
-          CI: true
-
-      - name: Run auth tests
-        run: npx playwright test e2e/auth.spec.ts
-        env:
-          BASE_URL:          ${{ env.PRODUCTION_URL }}
-          E2E_TEST_EMAIL:    ${{ secrets.E2E_TEST_EMAIL }}
-          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          # Sin BASE_URL → playwright.config levanta `next start` en localhost:3000
+          NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY:  ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY:     ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FOOTBALL_DATA_API_KEY:         ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          VAPID_PRIVATE_KEY:             ${{ secrets.VAPID_PRIVATE_KEY }}
+          CRON_SECRET:                   ${{ secrets.CRON_SECRET }}
+          E2E_TEST_EMAIL:                ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD:             ${{ secrets.E2E_TEST_PASSWORD }}
           CI: true
 
       - name: Upload test results
@@ -155,3 +123,93 @@ jobs:
           name: playwright-report-${{ github.run_id }}
           path: playwright-report/
           retention-days: 14
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 3a: Deploy preview en PRs — solo si E2E pasa
+  # ─────────────────────────────────────────────────────────────
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    needs: e2e
+    if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY:  ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY:     ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FOOTBALL_DATA_API_KEY:         ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          VAPID_PRIVATE_KEY:             ${{ secrets.VAPID_PRIVATE_KEY }}
+          CRON_SECRET:                   ${{ secrets.CRON_SECRET }}
+
+      - name: Deploy to Vercel (preview)
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### ✅ E2E passed · Preview deployment ready\n\n**URL:** ${{ steps.deploy.outputs.url }}\n\n> Todos los tests E2E pasaron antes de este deploy.`
+            })
+
+  # ─────────────────────────────────────────────────────────────
+  # JOB 3b: Deploy producción en main — solo si E2E pasa
+  # ─────────────────────────────────────────────────────────────
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: e2e
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build project artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          NEXT_PUBLIC_SUPABASE_URL:      ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_VAPID_PUBLIC_KEY:  ${{ secrets.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY:     ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          FOOTBALL_DATA_API_KEY:         ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          VAPID_PRIVATE_KEY:             ${{ secrets.VAPID_PRIVATE_KEY }}
+          CRON_SECRET:                   ${{ secrets.CRON_SECRET }}
+
+      - name: Deploy to Vercel (production)
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
